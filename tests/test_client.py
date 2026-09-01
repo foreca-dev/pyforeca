@@ -69,6 +69,23 @@ DAILY_PAYLOAD = {
     ]
 }
 
+AIR_QUALITY_PAYLOAD = {
+    "forecast": [
+        {
+            "time": "2026-09-01T18:00+03:00",
+            "pollutant": "Ozone",
+            "pollutantPhrase": "Ozone",
+            "AQI": 23,
+            "AQI_CO": 2,
+            "AQI_NO2": 5,
+            "AQI_O3": 23,
+            "AQI_SO2": 1,
+            "AQI_PM10": 8,
+            "AQI_PM2P5": 11,
+        }
+    ]
+}
+
 LOCATION_PAYLOAD = {
     "id": 100658225,
     "name": "Helsinki",
@@ -101,6 +118,9 @@ async def server() -> AsyncIterator[TestServer]:
     app.router.add_get("/api/v1/forecast/hourly/{loc}", _json_handler(HOURLY_PAYLOAD))
     app.router.add_get("/api/v1/forecast/daily/{loc}", _json_handler(DAILY_PAYLOAD))
     app.router.add_get("/api/v1/location/{loc}", _json_handler(LOCATION_PAYLOAD))
+    app.router.add_get(
+        "/api/v1/air-quality/forecast/hourly/{loc}", _json_handler(AIR_QUALITY_PAYLOAD)
+    )
     app.router.add_get("/error/api/v1/current/{status},x", _error_handler)
     test_server = TestServer(app)
     await test_server.start_server()
@@ -140,6 +160,16 @@ async def test_forecast_daily(server: TestServer) -> None:
     assert len(days) == 1
     assert days[0].max_temp == 18.0
     assert days[0].min_temp == 9.0
+
+
+async def test_air_quality_hourly(server: TestServer) -> None:
+    async with _client(server) as client:
+        aq = await client.air_quality_hourly("24.94,60.17", periods=1)
+    assert len(aq) == 1
+    assert aq[0].aqi == 23
+    assert aq[0].aqi_pm2p5 == 11
+    assert aq[0].pollutant == "Ozone"
+    assert seen_requests[0].query["periods"] == "1"
 
 
 async def test_location_info(server: TestServer) -> None:

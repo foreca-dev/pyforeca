@@ -5,9 +5,17 @@ from .exceptions import (
     ForecaError,
     ForecaRateLimitError,
 )
-from .models import CurrentWeather, DailyForecast, HourlyForecast, Location, Symbol
+from .models import (
+    AirQualityForecast,
+    CurrentWeather,
+    DailyForecast,
+    HourlyForecast,
+    Location,
+    Symbol,
+)
 
 __all__ = [
+    "AirQualityForecast",
     "CurrentWeather",
     "DailyForecast",
     "ForecaApiClient",

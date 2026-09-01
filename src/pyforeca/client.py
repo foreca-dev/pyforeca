@@ -10,7 +10,13 @@ from .exceptions import (
     ForecaError,
     ForecaRateLimitError,
 )
-from .models import CurrentWeather, DailyForecast, HourlyForecast, Location
+from .models import (
+    AirQualityForecast,
+    CurrentWeather,
+    DailyForecast,
+    HourlyForecast,
+    Location,
+)
 
 BASE_URL = "https://weatherapi.foreca.net"
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
@@ -82,6 +88,15 @@ class ForecaApiClient:
             params={"periods": periods, "dataset": dataset},
         )
         return [HourlyForecast.from_api(item) for item in data["forecast"]]
+
+    async def air_quality_hourly(
+        self, location: str, periods: int = 24
+    ) -> list[AirQualityForecast]:
+        data = await self._get(
+            f"/api/v1/air-quality/forecast/hourly/{location}",
+            params={"periods": periods},
+        )
+        return [AirQualityForecast.from_api(item) for item in data["forecast"]]
 
     async def forecast_daily(
         self, location: str, periods: int = 7, dataset: str = "standard"

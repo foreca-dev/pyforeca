@@ -118,6 +118,44 @@ class DailyForecast(_ApiModel):
     min_dew_point: float | None = None
 
 
+_AQ_FIELD_MAP = {
+    "time": "time",
+    "pollutant": "pollutant",
+    "pollutantPhrase": "pollutant_phrase",
+    "AQI": "aqi",
+    "AQI_CO": "aqi_co",
+    "AQI_NO2": "aqi_no2",
+    "AQI_O3": "aqi_o3",
+    "AQI_SO2": "aqi_so2",
+    "AQI_PM10": "aqi_pm10",
+    "AQI_PM2P5": "aqi_pm2p5",
+}
+
+
+@dataclass(slots=True)
+class AirQualityForecast:
+    time: str | None = None
+    pollutant: str | None = None
+    pollutant_phrase: str | None = None
+    aqi: float | None = None
+    aqi_co: float | None = None
+    aqi_no2: float | None = None
+    aqi_o3: float | None = None
+    aqi_so2: float | None = None
+    aqi_pm10: float | None = None
+    aqi_pm2p5: float | None = None
+
+    @classmethod
+    def from_api(cls, data: dict[str, Any]) -> AirQualityForecast:
+        return cls(
+            **{
+                snake: data[key]
+                for key, snake in _AQ_FIELD_MAP.items()
+                if key in data
+            }
+        )
+
+
 @dataclass(slots=True, frozen=True)
 class Symbol:
     """Decoded Foreca weather symbol code (e.g. "d421").
