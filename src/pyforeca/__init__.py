@@ -6,6 +6,7 @@ from .exceptions import (
     ForecaRateLimitError,
 )
 from .models import (
+    AirQualityDailyForecast,
     AirQualityForecast,
     CurrentWeather,
     DailyForecast,
@@ -15,6 +16,7 @@ from .models import (
 )
 
 __all__ = [
+    "AirQualityDailyForecast",
     "AirQualityForecast",
     "CurrentWeather",
     "DailyForecast",

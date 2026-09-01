@@ -86,6 +86,30 @@ AIR_QUALITY_PAYLOAD = {
     ]
 }
 
+AIR_QUALITY_DAILY_PAYLOAD = {
+    "forecast": [
+        {
+            "date": "2026-09-01",
+            "AQI": 37,
+            "pollutant": "Ozone",
+            "pollutantPhrase": "Ozone",
+            "AQI_CO": 1,
+            "AQI_NO2": 8,
+            "AQI_GO3": 37,
+            "AQI_SO2": 0,
+            "AQI_PM2P5": 21,
+            "AQI_PM10": 8,
+        },
+        {
+            "date": "2026-09-02",
+            "AQI": 34,
+            "pollutant": "Ozone",
+            "pollutantPhrase": "Ozone",
+            "AQI_GO3": 34,
+        },
+    ]
+}
+
 LOCATION_PAYLOAD = {
     "id": 100658225,
     "name": "Helsinki",
@@ -120,6 +144,10 @@ async def server() -> AsyncIterator[TestServer]:
     app.router.add_get("/api/v1/location/{loc}", _json_handler(LOCATION_PAYLOAD))
     app.router.add_get(
         "/api/v1/air-quality/forecast/hourly/{loc}", _json_handler(AIR_QUALITY_PAYLOAD)
+    )
+    app.router.add_get(
+        "/api/v1/air-quality/forecast/daily/{loc}",
+        _json_handler(AIR_QUALITY_DAILY_PAYLOAD),
     )
     app.router.add_get("/error/api/v1/current/{status},x", _error_handler)
     test_server = TestServer(app)
@@ -170,6 +198,17 @@ async def test_air_quality_hourly(server: TestServer) -> None:
     assert aq[0].aqi_pm2p5 == 11
     assert aq[0].pollutant == "Ozone"
     assert seen_requests[0].query["periods"] == "1"
+
+
+async def test_air_quality_daily(server: TestServer) -> None:
+    async with _client(server) as client:
+        days = await client.air_quality_daily("24.94,60.17")
+    assert len(days) == 2
+    assert days[0].date == "2026-09-01"
+    assert days[0].aqi == 37
+    assert days[0].aqi_o3 == 37
+    assert days[1].aqi == 34
+    assert seen_requests[0].query["periods"] == "4"
 
 
 async def test_location_info(server: TestServer) -> None:
