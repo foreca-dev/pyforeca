@@ -1,8 +1,7 @@
 # pyforeca
 
 [![CI](https://github.com/foreca-dev/pyforeca/actions/workflows/ci.yml/badge.svg)](https://github.com/foreca-dev/pyforeca/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/pyforeca)](https://pypi.org/project/pyforeca/)
-[![Python](https://img.shields.io/pypi/pyversions/pyforeca)](https://pypi.org/project/pyforeca/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Async Python client for the [Foreca Weather API](https://developer.foreca.com) —
@@ -19,6 +18,9 @@ a plan (the Freemium plan is free forever), and copy your key from **My API**.
 ```bash
 pip install pyforeca
 ```
+
+Not on PyPI yet — until the first release, install from source:
+`pip install git+https://github.com/foreca-dev/pyforeca.git`
 
 ## Usage
 
