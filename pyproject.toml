@@ -22,7 +22,8 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://developer.foreca.com"
-Repository = "https://github.com/foreca-tech/pyforeca"
+Repository = "https://github.com/foreca-dev/pyforeca"
+Documentation = "https://developer.foreca.com/documentation"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pyforeca"]
