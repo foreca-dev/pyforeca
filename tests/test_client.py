@@ -384,11 +384,22 @@ async def test_observation_latest_none_available(server: TestServer) -> None:
 
 
 USAGE_PAYLOAD = {
-    "apis": [{"name": "Weather API", "hits": 44}],
+    "apis": [
+        {"name": "Weather API", "hits": 40},
+        {"name": "Map API", "hits": 4},
+        {"name": "Administrative", "hits": 0},
+    ],
     "hits": 44,
     "daily": [
-        {"date": "2026-09-01", "hits": 23},
-        {"date": "2026-09-03", "hits": 21},
+        {"date": "2026-09-01", "apis": [{"name": "Weather API", "hits": 23}]},
+        {
+            "date": "2026-09-03",
+            "apis": [
+                {"name": "Weather API", "hits": 17},
+                {"name": "Map API", "hits": 4},
+            ],
+        },
+        {"date": "2026-09-04"},
     ],
 }
 
@@ -398,9 +409,12 @@ async def test_usage_month(server: TestServer) -> None:
     async with _client(server) as client:
         usage = await client.usage_month("2026-09")
     assert usage.hits == 44
-    assert len(usage.daily) == 2
+    assert len(usage.daily) == 3
+    assert usage.hits_on("2026-09-01") == 23
     assert usage.hits_on("2026-09-03") == 21
     assert usage.hits_on("2026-09-02") == 0
+    assert usage.daily[2].hits is None
+    assert usage.hits_on("2026-09-04") == 0
 
 
 async def test_usage_month_without_daily_breakdown(server: TestServer) -> None:

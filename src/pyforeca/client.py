@@ -110,6 +110,7 @@ class ForecaApiClient:
         data = await self._get(
             f"/api/v1/observation/latest/{_validate_location(location)}"
         )
+        # The API orders stations by distance, so the first is the closest.
         observations = data.get("observations") or []
         return Observation.from_api(observations[0]) if observations else None
 

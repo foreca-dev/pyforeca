@@ -221,6 +221,21 @@ class AirQualityDailyForecast:
         )
 
 
+def _usage_hits(entry: dict[str, Any]) -> float | None:
+    """Read a request count that the API may only give per API product.
+
+    The month carries a top-level total, but each day in the breakdown carries
+    only an "apis" list, so the day's total has to be summed from it.
+    """
+    hits = entry.get("hits")
+    if hits is not None:
+        return hits
+    apis = entry.get("apis")
+    if not apis:
+        return None
+    return sum(api.get("hits") or 0 for api in apis)
+
+
 @dataclass(slots=True)
 class UsageDay:
     date: str | None = None
@@ -235,9 +250,9 @@ class UsageMonth:
     @classmethod
     def from_api(cls, data: dict[str, Any]) -> UsageMonth:
         return cls(
-            hits=data.get("hits"),
+            hits=_usage_hits(data),
             daily=[
-                UsageDay(date=day.get("date"), hits=day.get("hits"))
+                UsageDay(date=day.get("date"), hits=_usage_hits(day))
                 for day in data.get("daily") or []
             ],
         )
