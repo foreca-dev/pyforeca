@@ -12,7 +12,8 @@ with typed models and `aiohttp` under the hood.
 
 Create a free account at [developer.foreca.com](https://developer.foreca.com), pick a plan,
 and copy your key from **My API**. The Freemium plan is free for non-commercial use
-(hobbyist, student, and research projects); commercial use needs a paid plan.
+(hobbyist, student, and research projects); commercial use, a larger quota, or the rest of
+Foreca's weather products need a [paid plan](https://business.foreca.com/weather-api/pricing).
 
 ## Install
 
