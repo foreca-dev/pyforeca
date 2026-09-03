@@ -318,9 +318,32 @@ async def test_location_injection_rejected(server: TestServer, location: str) ->
             client.forecast_daily,
             client.air_quality_hourly,
             client.air_quality_daily,
+            client.observation_latest,
+            client.forecast_minutely,
         ):
             with pytest.raises(ValueError):
                 await call(location)
+    assert not seen_requests
+
+
+@pytest.mark.parametrize(
+    "month",
+    [
+        pytest.param("../../../authorize/key", id="path_escape"),
+        pytest.param("2026-09?group_by=endpoint", id="query_injection"),
+        pytest.param("2026-09#frag", id="fragment"),
+        pytest.param("..%2fauthorize", id="percent_escape"),
+        pytest.param("//evil.example.com/x", id="double_slash"),
+        pytest.param("2026-09/extra", id="extra_segment"),
+        pytest.param("2026-9", id="unpadded"),
+        pytest.param("", id="empty"),
+    ],
+)
+async def test_usage_month_injection_rejected(server: TestServer, month: str) -> None:
+    """A month must never be able to escape the endpoint path or add query params."""
+    async with _client(server) as client:
+        with pytest.raises(ValueError):
+            await client.usage_month(month)
     assert not seen_requests
 
 

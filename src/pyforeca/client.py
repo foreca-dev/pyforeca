@@ -32,6 +32,9 @@ REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
 # escape the endpoint path or override the query parameters set below.
 _LOCATION_RE = re.compile(r"\A(?:-?\d{1,3}(?:\.\d+)?,-?\d{1,2}(?:\.\d+)?|\d{1,20})\Z")
 
+# A month is "YYYY-MM"; the same escaping applies as for a location.
+_MONTH_RE = re.compile(r"\A\d{4}-\d{2}\Z")
+
 
 def format_location(lon: float, lat: float) -> str:
     """Build the location path segment; the API expects longitude first."""
@@ -48,6 +51,13 @@ def _validate_location(location: str) -> str:
             f"Invalid location {location!r}: expected '<lon>,<lat>' or a location id"
         )
     return location
+
+
+def _validate_month(month: str) -> str:
+    """Reject any month that is not "YYYY-MM"."""
+    if not _MONTH_RE.match(month):
+        raise ValueError(f"Invalid month {month!r}: expected 'YYYY-MM'")
+    return month
 
 
 class ForecaApiClient:
@@ -123,7 +133,7 @@ class ForecaApiClient:
 
     async def usage_month(self, month: str) -> UsageMonth:
         """Return this account's request counts for a month ("YYYY-MM")."""
-        data = await self._get(f"/usage/month/{month}")
+        data = await self._get(f"/usage/month/{_validate_month(month)}")
         return UsageMonth.from_api(data)
 
     async def forecast_hourly(
