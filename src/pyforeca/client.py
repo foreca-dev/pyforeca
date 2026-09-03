@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+import re
 from typing import Any, Self
 
 import aiohttp
@@ -22,10 +24,27 @@ from .models import (
 BASE_URL = "https://weatherapi.foreca.net"
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
 
+# A location is "<lon>,<lat>" or a numeric Foreca location id. Anything else —
+# path separators, "..", query or fragment markers, percent escapes — would
+# escape the endpoint path or override the query parameters set below.
+_LOCATION_RE = re.compile(r"\A(?:-?\d{1,3}(?:\.\d+)?,-?\d{1,2}(?:\.\d+)?|\d{1,20})\Z")
+
 
 def format_location(lon: float, lat: float) -> str:
     """Build the location path segment; the API expects longitude first."""
+    for name, value, limit in (("longitude", lon, 180.0), ("latitude", lat, 90.0)):
+        if not math.isfinite(value) or abs(value) > limit:
+            raise ValueError(f"{name} out of range: {value!r}")
     return f"{lon},{lat}"
+
+
+def _validate_location(location: str) -> str:
+    """Reject any location that is not coordinates or a numeric location id."""
+    if not _LOCATION_RE.match(location):
+        raise ValueError(
+            f"Invalid location {location!r}: expected '<lon>,<lat>' or a location id"
+        )
+    return location
 
 
 class ForecaApiClient:
@@ -74,10 +93,12 @@ class ForecaApiClient:
             raise ForecaConnectionError(f"Error requesting {path}: {err}") from err
 
     async def location_info(self, location: str) -> Location:
+        location = _validate_location(location)
         data = await self._get(f"/api/v1/location/{location}")
         return Location.from_api(data)
 
     async def current(self, location: str) -> CurrentWeather:
+        location = _validate_location(location)
         data = await self._get(f"/api/v1/current/{location}")
         return CurrentWeather.from_api(data["current"])
 
@@ -85,7 +106,7 @@ class ForecaApiClient:
         self, location: str, periods: int = 24, dataset: str = "standard"
     ) -> list[HourlyForecast]:
         data = await self._get(
-            f"/api/v1/forecast/hourly/{location}",
+            f"/api/v1/forecast/hourly/{_validate_location(location)}",
             params={"periods": periods, "dataset": dataset},
         )
         return [HourlyForecast.from_api(item) for item in data["forecast"]]
@@ -94,7 +115,7 @@ class ForecaApiClient:
         self, location: str, periods: int = 24
     ) -> list[AirQualityForecast]:
         data = await self._get(
-            f"/api/v1/air-quality/forecast/hourly/{location}",
+            f"/api/v1/air-quality/forecast/hourly/{_validate_location(location)}",
             params={"periods": periods},
         )
         return [AirQualityForecast.from_api(item) for item in data["forecast"]]
@@ -103,7 +124,7 @@ class ForecaApiClient:
         self, location: str, periods: int = 4
     ) -> list[AirQualityDailyForecast]:
         data = await self._get(
-            f"/api/v1/air-quality/forecast/daily/{location}",
+            f"/api/v1/air-quality/forecast/daily/{_validate_location(location)}",
             params={"periods": periods},
         )
         return [AirQualityDailyForecast.from_api(item) for item in data["forecast"]]
@@ -112,7 +133,7 @@ class ForecaApiClient:
         self, location: str, periods: int = 7, dataset: str = "standard"
     ) -> list[DailyForecast]:
         data = await self._get(
-            f"/api/v1/forecast/daily/{location}",
+            f"/api/v1/forecast/daily/{_validate_location(location)}",
             params={"periods": periods, "dataset": dataset},
         )
         return [DailyForecast.from_api(item) for item in data["forecast"]]

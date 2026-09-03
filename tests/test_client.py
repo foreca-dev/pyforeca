@@ -149,7 +149,7 @@ async def server() -> AsyncIterator[TestServer]:
         "/api/v1/air-quality/forecast/daily/{loc}",
         _json_handler(AIR_QUALITY_DAILY_PAYLOAD),
     )
-    app.router.add_get("/error/api/v1/current/{status},x", _error_handler)
+    app.router.add_get("/error/api/v1/current/{status},0", _error_handler)
     test_server = TestServer(app)
     await test_server.start_server()
     seen_requests.clear()
@@ -227,7 +227,7 @@ async def test_error_statuses(
 ) -> None:
     async with _client(server, "/error") as client:
         with pytest.raises(exception):
-            await client.current(f"{status},x")
+            await client.current(f"{status},0")
 
 
 def test_format_location_longitude_first() -> None:
@@ -250,3 +250,62 @@ def test_symbol_parse() -> None:
     assert Symbol.parse("x421") is None
     assert Symbol.parse("d42") is None
     assert Symbol.parse("d4a1") is None
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        pytest.param("../../../admin/keys", id="path_escape"),
+        pytest.param("60,25?periods=9999", id="query_injection"),
+        pytest.param("60,25#frag", id="fragment"),
+        pytest.param("..%2fadmin", id="percent_escape"),
+        pytest.param("//evil.example.com/x", id="double_slash"),
+        pytest.param("60,25/extra", id="extra_segment"),
+        pytest.param("", id="empty"),
+        pytest.param("Helsinki", id="place_name"),
+    ],
+)
+async def test_location_injection_rejected(server: TestServer, location: str) -> None:
+    """A location must never be able to escape the endpoint path or add query params."""
+    async with _client(server) as client:
+        for call in (
+            client.location_info,
+            client.current,
+            client.forecast_hourly,
+            client.forecast_daily,
+            client.air_quality_hourly,
+            client.air_quality_daily,
+        ):
+            with pytest.raises(ValueError):
+                await call(location)
+    assert not seen_requests
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        pytest.param("24.94,60.17", id="coordinates"),
+        pytest.param("-24.94,-60.17", id="negative_coordinates"),
+        pytest.param("100658225", id="location_id"),
+    ],
+)
+async def test_valid_locations_accepted(server: TestServer, location: str) -> None:
+    """Coordinates and numeric location ids stay accepted."""
+    async with _client(server) as client:
+        await client.current(location)
+    assert seen_requests
+
+
+@pytest.mark.parametrize(
+    ("lon", "lat"),
+    [
+        pytest.param(181.0, 0.0, id="lon_too_high"),
+        pytest.param(0.0, 91.0, id="lat_too_high"),
+        pytest.param(float("nan"), 0.0, id="lon_nan"),
+        pytest.param(0.0, float("inf"), id="lat_inf"),
+    ],
+)
+def test_format_location_rejects_out_of_range(lon: float, lat: float) -> None:
+    """format_location must reject coordinates the API cannot represent."""
+    with pytest.raises(ValueError):
+        format_location(lon, lat)
