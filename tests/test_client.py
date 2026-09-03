@@ -190,6 +190,8 @@ async def server() -> AsyncIterator[TestServer]:
     app.router.add_get(
         "/empty/api/v1/observation/latest/{loc}", _json_handler({"observations": []})
     )
+    app.router.add_get("/usage/month/{month}", _json_handler(USAGE_PAYLOAD))
+    app.router.add_get("/nodaily/usage/month/{month}", _json_handler({"hits": 7}))
     app.router.add_get("/error/api/v1/current/{status},0", _error_handler)
     test_server = TestServer(app)
     await test_server.start_server()
@@ -379,3 +381,32 @@ async def test_observation_latest_none_available(server: TestServer) -> None:
     async with _client(server, "/empty") as client:
         obs = await client.observation_latest("24.94,60.17")
     assert obs is None
+
+
+USAGE_PAYLOAD = {
+    "apis": [{"name": "Weather API", "hits": 44}],
+    "hits": 44,
+    "daily": [
+        {"date": "2026-09-01", "hits": 23},
+        {"date": "2026-09-03", "hits": 21},
+    ],
+}
+
+
+async def test_usage_month(server: TestServer) -> None:
+    """Test the monthly usage counts and the per-day lookup."""
+    async with _client(server) as client:
+        usage = await client.usage_month("2026-09")
+    assert usage.hits == 44
+    assert len(usage.daily) == 2
+    assert usage.hits_on("2026-09-03") == 21
+    assert usage.hits_on("2026-09-02") == 0
+
+
+async def test_usage_month_without_daily_breakdown(server: TestServer) -> None:
+    """Test a month with no daily breakdown still reports a total."""
+    async with _client(server, "/nodaily") as client:
+        usage = await client.usage_month("2026-09")
+    assert usage.hits == 7
+    assert usage.daily == []
+    assert usage.hits_on("2026-09-03") == 0

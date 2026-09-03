@@ -15,6 +15,8 @@ from .models import (
     MinutelyForecast,
     Observation,
     Symbol,
+    UsageDay,
+    UsageMonth,
 )
 
 __all__ = [
@@ -32,5 +34,7 @@ __all__ = [
     "MinutelyForecast",
     "Observation",
     "Symbol",
+    "UsageDay",
+    "UsageMonth",
     "format_location",
 ]

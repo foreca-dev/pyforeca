@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from typing import Any, Self
 
 _CAMEL_RE = re.compile(r"(?<!^)(?=[A-Z0-9])")
@@ -219,6 +219,35 @@ class AirQualityDailyForecast:
                 if key in data
             }
         )
+
+
+@dataclass(slots=True)
+class UsageDay:
+    date: str | None = None
+    hits: float | None = None
+
+
+@dataclass(slots=True)
+class UsageMonth:
+    hits: float | None = None
+    daily: list[UsageDay] = field(default_factory=list)
+
+    @classmethod
+    def from_api(cls, data: dict[str, Any]) -> UsageMonth:
+        return cls(
+            hits=data.get("hits"),
+            daily=[
+                UsageDay(date=day.get("date"), hits=day.get("hits"))
+                for day in data.get("daily") or []
+            ],
+        )
+
+    def hits_on(self, date: str) -> float:
+        """Return the request count for an ISO date, zero if the day has none."""
+        for day in self.daily:
+            if day.date == date:
+                return day.hits or 0
+        return 0
 
 
 @dataclass(slots=True, frozen=True)

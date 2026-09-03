@@ -21,6 +21,7 @@ from .models import (
     Location,
     MinutelyForecast,
     Observation,
+    UsageMonth,
 )
 
 BASE_URL = "https://weatherapi.foreca.net"
@@ -118,6 +119,11 @@ class ForecaApiClient:
             f"/api/v1/forecast/minutely/{_validate_location(location)}"
         )
         return [MinutelyForecast.from_api(item) for item in data["forecast"]]
+
+    async def usage_month(self, month: str) -> UsageMonth:
+        """Return this account's request counts for a month ("YYYY-MM")."""
+        data = await self._get(f"/usage/month/{month}")
+        return UsageMonth.from_api(data)
 
     async def forecast_hourly(
         self, location: str, periods: int = 24, dataset: str = "standard"
