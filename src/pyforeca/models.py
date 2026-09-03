@@ -57,6 +57,33 @@ class CurrentWeather(_ApiModel):
 
 
 @dataclass(slots=True)
+class MinutelyForecast(_ApiModel):
+    time: str | None = None
+    precip_rate: float | None = None
+
+
+@dataclass(slots=True)
+class Observation(_ApiModel):
+    time: str | None = None
+    station: str | None = None
+    distance: str | None = None
+    elevation: float | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    symbol: str | None = None
+    temperature: float | None = None
+    feels_like_temp: float | None = None
+    rel_humidity: float | None = None
+    pressure: float | None = None
+    visibility: float | None = None
+    wind_speed: float | None = None
+    wind_dir: float | None = None
+    wind_dir_str: str | None = None
+    wind_gust: float | None = None
+    snow_depth: float | None = None
+
+
+@dataclass(slots=True)
 class HourlyForecast(_ApiModel):
     time: str | None = None
     symbol: str | None = None

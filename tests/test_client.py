@@ -110,6 +110,40 @@ AIR_QUALITY_DAILY_PAYLOAD = {
     ]
 }
 
+MINUTELY_PAYLOAD = {
+    "resolution": "1 min",
+    "forecast": [
+        {"time": "2026-09-01T17:00+03:00", "precipRate": 0.0},
+        {"time": "2026-09-01T17:01+03:00", "precipRate": 0.0},
+        {"time": "2026-09-01T17:02+03:00", "precipRate": 0.6},
+        {"time": "2026-09-01T17:03+03:00", "precipRate": 1.2},
+    ],
+}
+
+OBSERVATION_PAYLOAD = {
+    "observations": [
+        {
+            "time": "2026-09-01T16:50+03:00",
+            "station": "Helsinki Kaisaniemi",
+            "distance": "2 km NE",
+            "elevation": 3,
+            "latitude": 60.18,
+            "longitude": 24.94,
+            "symbol": "d200",
+            "temperature": 18.9,
+            "feelsLikeTemp": 18.4,
+            "relHumidity": 71,
+            "pressure": 1007.2,
+            "visibility": 30000,
+            "windSpeed": 3.1,
+            "windDir": 205,
+            "windDirString": "SSW",
+            "windGust": 6.4,
+            "snowDepth": 0,
+        }
+    ]
+}
+
 LOCATION_PAYLOAD = {
     "id": 100658225,
     "name": "Helsinki",
@@ -148,6 +182,13 @@ async def server() -> AsyncIterator[TestServer]:
     app.router.add_get(
         "/api/v1/air-quality/forecast/daily/{loc}",
         _json_handler(AIR_QUALITY_DAILY_PAYLOAD),
+    )
+    app.router.add_get("/api/v1/forecast/minutely/{loc}", _json_handler(MINUTELY_PAYLOAD))
+    app.router.add_get(
+        "/api/v1/observation/latest/{loc}", _json_handler(OBSERVATION_PAYLOAD)
+    )
+    app.router.add_get(
+        "/empty/api/v1/observation/latest/{loc}", _json_handler({"observations": []})
     )
     app.router.add_get("/error/api/v1/current/{status},0", _error_handler)
     test_server = TestServer(app)
@@ -309,3 +350,32 @@ def test_format_location_rejects_out_of_range(lon: float, lat: float) -> None:
     """format_location must reject coordinates the API cannot represent."""
     with pytest.raises(ValueError):
         format_location(lon, lat)
+
+
+async def test_forecast_minutely(server: TestServer) -> None:
+    """Test the one-minute precipitation nowcast."""
+    async with _client(server) as client:
+        steps = await client.forecast_minutely("24.94,60.17")
+    assert len(steps) == 4
+    assert steps[0].precip_rate == 0.0
+    assert steps[2].precip_rate == 0.6
+    assert steps[2].time == "2026-09-01T17:02+03:00"
+
+
+async def test_observation_latest(server: TestServer) -> None:
+    """Test the latest station observation."""
+    async with _client(server) as client:
+        obs = await client.observation_latest("24.94,60.17")
+    assert obs is not None
+    assert obs.station == "Helsinki Kaisaniemi"
+    assert obs.distance == "2 km NE"
+    assert obs.temperature == 18.9
+    assert obs.wind_dir_str == "SSW"
+    assert obs.snow_depth == 0
+
+
+async def test_observation_latest_none_available(server: TestServer) -> None:
+    """Test a location with no nearby station returns None rather than raising."""
+    async with _client(server, "/empty") as client:
+        obs = await client.observation_latest("24.94,60.17")
+    assert obs is None

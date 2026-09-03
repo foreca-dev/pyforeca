@@ -19,9 +19,6 @@ a plan (the Freemium plan is free forever), and copy your key from **My API**.
 pip install pyforeca
 ```
 
-Not on PyPI yet — until the first release, install from source:
-`pip install git+https://github.com/foreca-dev/pyforeca.git`
-
 ## Usage
 
 ```python
@@ -49,6 +46,8 @@ application; the client then leaves closing it to you.
 |---|---|
 | `location_info(location)` | `/api/v1/location/{location}` |
 | `current(location)` | `/api/v1/current/{location}` |
+| `observation_latest(location)` | `/api/v1/observation/latest/{location}` |
+| `forecast_minutely(location)` | `/api/v1/forecast/minutely/{location}` |
 | `forecast_hourly(location, periods, dataset)` | `/api/v1/forecast/hourly/{location}` |
 | `forecast_daily(location, periods, dataset)` | `/api/v1/forecast/daily/{location}` |
 | `air_quality_hourly(location, periods)` | `/api/v1/air-quality/forecast/hourly/{location}` |

@@ -19,6 +19,8 @@ from .models import (
     DailyForecast,
     HourlyForecast,
     Location,
+    MinutelyForecast,
+    Observation,
 )
 
 BASE_URL = "https://weatherapi.foreca.net"
@@ -101,6 +103,21 @@ class ForecaApiClient:
         location = _validate_location(location)
         data = await self._get(f"/api/v1/current/{location}")
         return CurrentWeather.from_api(data["current"])
+
+    async def observation_latest(self, location: str) -> Observation | None:
+        """Return the latest observation from a nearby station, if any."""
+        data = await self._get(
+            f"/api/v1/observation/latest/{_validate_location(location)}"
+        )
+        observations = data.get("observations") or []
+        return Observation.from_api(observations[0]) if observations else None
+
+    async def forecast_minutely(self, location: str) -> list[MinutelyForecast]:
+        """Return one-minute precipitation rates for the next hour."""
+        data = await self._get(
+            f"/api/v1/forecast/minutely/{_validate_location(location)}"
+        )
+        return [MinutelyForecast.from_api(item) for item in data["forecast"]]
 
     async def forecast_hourly(
         self, location: str, periods: int = 24, dataset: str = "standard"

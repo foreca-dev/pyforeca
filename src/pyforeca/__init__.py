@@ -12,6 +12,8 @@ from .models import (
     DailyForecast,
     HourlyForecast,
     Location,
+    MinutelyForecast,
+    Observation,
     Symbol,
 )
 
@@ -27,6 +29,8 @@ __all__ = [
     "ForecaRateLimitError",
     "HourlyForecast",
     "Location",
+    "MinutelyForecast",
+    "Observation",
     "Symbol",
     "format_location",
 ]
