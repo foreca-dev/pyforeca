@@ -10,8 +10,9 @@ with typed models and `aiohttp` under the hood.
 
 ## Getting an API key
 
-Create a free account at [developer.foreca.com](https://developer.foreca.com), pick
-a plan (the Freemium plan is free forever), and copy your key from **My API**.
+Create a free account at [developer.foreca.com](https://developer.foreca.com), pick a plan,
+and copy your key from **My API**. The Freemium plan is free for non-commercial use
+(hobbyist, student, and research projects); commercial use needs a paid plan.
 
 ## Install
 

@@ -8,7 +8,7 @@ version = "0.2.0"
 description = "Async Python client for the Foreca Weather API"
 readme = "README.md"
 license = "MIT"
-authors = [{ name = "Foreca Ltd", email = "dev-support@foreca.com" }]
+authors = [{ name = "Foreca Ltd" }]
 requires-python = ">=3.12"
 dependencies = ["aiohttp>=3.9.0"]
 classifiers = [
