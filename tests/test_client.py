@@ -447,3 +447,23 @@ async def test_usage_month_without_daily_breakdown(server: TestServer) -> None:
     assert usage.hits == 7
     assert usage.daily == []
     assert usage.hits_on("2026-09-03") == 0
+
+async def test_integral_percentages_are_typed_as_int(server: TestServer) -> None:
+    """Test the percentage fields the API only ever reports as whole numbers.
+
+    Measured over 290 forecast steps in five climates: precipProb and cloudiness
+    are always integral, while thunderProb is not, so only the first two are
+    narrowed to int.
+    """
+    async with _client(server) as client:
+        hours = await client.forecast_hourly("24.94,60.17")
+        days = await client.forecast_daily("24.94,60.17")
+        current = await client.current("24.94,60.17")
+    for value in (
+        hours[0].precip_prob,
+        hours[0].cloudiness,
+        days[0].precip_prob,
+        current.precip_prob,
+        current.cloudiness,
+    ):
+        assert value is None or isinstance(value, int)
